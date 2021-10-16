@@ -16,6 +16,8 @@ class Pile :
         self._storage.insert(0, elem)
     def elems(self) : #méthode "triche" utilisée pour afficher la pile jeucartes plus tard
         return self._storage
+    def shufflestack(self) :
+        random.shuffle(self._storage)
 
 
 class File : 
@@ -85,7 +87,7 @@ class JeuCartes:
                     self._jeu.empile(Carte(c,v))
 
     def melange(self) :
-        random.shuffle(self._jeu)
+        self._jeu.shufflestack()
 
     def distrib(self) :
         return(self._jeu.popdepile())
@@ -115,7 +117,7 @@ class JeuJoueur:
     def playcard(self) :
         return self._jeu.popdefile()
 
-    def estVide(self) :
+    def isempty(self) :
         return self._jeu.empty()
 
     def length(self) :
@@ -136,38 +138,57 @@ class Bataille:
     #     d'un jeu complet de carte (classe JeauCartes) qu'il a d'abord construit et mélangé.
     #     -	jouer : partie jouée (tours de jeux jusqu'à la victoire d'un joueur dans la limite de nbtours et affichage des résultats)
     
-    def __init__(self, nbcartes, cartesJ1, cartesJ2, nbtours) :
-        self._nbtours = nbtours
-        self._nbcartes = nbcartes
-        self._cartesJ1 = cartesJ1
-        self._cartesJ2 = cartesJ2 
+    def __init__(self, nbt = 100000, nbc = 26) :
+        assert nbc <= 26 , 'Cannot play with more than 52 cards'
+        self._nbc = nbc
+        self._nbt = nbt
+        self._cartesJ1 = JeuJoueur()
+        self._cartesJ2 = JeuJoueur()
+        jeu = JeuCartes()
+        jeu.melange()
+        for _ in range(nbc) :
+            self._cartesJ1.addcard(jeu.distrib())
+        for _ in range(nbc) :
+            self._cartesJ2.addcard(jeu.distrib())
 
-    def jouer(self,) :
-        for i in range(nbtours) :
+    def jouer(self) :
+        for _ in range(self._nbt) :
             c1 = self._cartesJ1.playcard()
             c2 = self._cartesJ2.playcard()
-            result = c1.compare(c2)
-            if result == 1 :
-                #c'est c2 qui l'emporte
-                self._cartesJ2.addcard(c1)
-                self._cartesJ2.addcard(c1)
-            if result == 2 :
-                #c'est c1 qui l'emporte
+            if c1.compare(c2) == 2 :
+                #la carte 1 l'emporte
+                self._cartesJ1.addcard(c1)
                 self._cartesJ1.addcard(c2)
-                self._cartesJ1.addcard(c2)
-            if result == 0 :
-                #égalité : on sort les cartes du jeu (ce qui équivaut à les remettre à personne, soit un pass statement)
+            if c1.compare(c2) == 1 :
+                #la carte 2 l'emporte
+                self._cartesJ2.addcard(c1)
+                self._cartesJ2.addcard(c2)
+
+            if c1.compare(c2) == 0 :
+                #égalité : on sort les deux cartes du jeu, donc on ne fait rien
                 pass
-            if cartesJ1.empty() :
+            if self._cartesJ1.isempty() :
                 return 'j1'
-            if cartesJ2.empty() :
+            if self._cartesJ2.isempty() :
                 return 'j2'
-        if cartesJ1.length() > cartesJ2.length() :
+
+        if self._cartesJ1.length() > self._cartesJ2.length() :
             return 'j1'
-        if cartesJ1.length() < cartesJ2.length() :
+
+        if self._cartesJ2.length() > self._cartesJ1.length() :
             return 'j2'
-        if cartesJ1.length() == cartesJ2.length() :
+
+        if self._cartesJ1.length() == self._cartesJ2.length() :
             return 'draw'
+
+# Programme principal
+
+main = Bataille(nbt=2, nbc=10)
+print(main.jouer())
+
+
+
+
 
 # B=Bataille(2,10) # Va initialiser un jeu de bataille avec 2 cartes distribuées à chaque joueur et pour 10 tours maximum
 # B.jouer() # lance le jeu
